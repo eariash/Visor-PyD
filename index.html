@@ -235,6 +235,69 @@ tr.fc td{background:var(--fc)}
 .notes h4{margin:0 0 6px;font-size:13px;font-weight:700;color:var(--ink)}
 .notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;max-width:70ch}
 
+/* Acerca de: ventana sobre el visor, con la misma estructura que el "Acerca de" de PRISMAS
+   (emblema animado a la izquierda, fuente de datos al centro y modelos disponibles a la derecha) */
+.abtn{flex:none;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-weight:700;font-size:13px;padding:8px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background-color var(--m-out) var(--ease),transform var(--m-out) var(--ease)}
+.abtn:hover{background:rgba(255,255,255,.12);transition-duration:var(--m-in)}
+.abtn:active{transform:scale(.97);transition-duration:var(--m-press)}
+.about{position:fixed;inset:0;z-index:2000;background:rgba(22,35,74,.5);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));opacity:0;visibility:hidden;transition:opacity 220ms var(--ease),visibility 0s linear 220ms}
+.about.open{opacity:1;visibility:visible;transition:opacity 220ms var(--ease),visibility 0s}
+.abox{position:relative;width:min(1240px,100%);max-height:100%;overflow:auto;border-radius:20px;border:1px solid var(--line);box-shadow:var(--shadow-up);
+  background:radial-gradient(circle at 30% 42%,transparent 0 180px,rgba(11,57,184,.05) 181px,transparent 182px 290px,rgba(11,57,184,.04) 291px,transparent 292px),linear-gradient(160deg,var(--surface) 0%,var(--surface-2) 55%,var(--bg) 100%);
+  display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px 32px;padding:34px 40px 22px;transform:translateY(10px) scale(.985);transition:transform 320ms var(--ease-enter)}
+.about.open .abox{transform:none}
+.aclose{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:transform var(--m-out) var(--ease),background-color var(--m-out) var(--ease)}
+.aclose:hover{background:var(--hover);transition-duration:var(--m-in)}
+.aclose:active{transform:scale(.94)}
+.aemb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0}
+.aemb svg{width:100%;max-width:460px;height:auto;overflow:visible}
+.aemb text{font-family:var(--f-body);font-size:12.5px;font-weight:700;fill:var(--ink)}
+.aemb .in{stroke:var(--azul);stroke-width:2.2;fill:none;stroke-dasharray:240;stroke-dashoffset:240}
+:root[data-theme="dark"] .aemb .in{stroke:var(--ink)}
+.aemb .ray{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:260;stroke-dashoffset:260;filter:url(#glow)}
+.aemb .rl{opacity:0}
+.aemb .node{transform-origin:228px 150px;transform:scale(0)}
+.about.open .in{animation:draw 700ms var(--ease) 150ms forwards}
+.about.open .node{animation:pop 420ms var(--ease-enter) 780ms forwards}
+.about.open .ray{animation:draw 900ms var(--ease) calc(1000ms + var(--i) * 70ms) forwards}
+.about.open .rl{animation:fade 400ms var(--ease) calc(1500ms + var(--i) * 70ms) forwards}
+@keyframes draw{to{stroke-dashoffset:0}} @keyframes pop{to{transform:scale(1)}} @keyframes fade{to{opacity:1}}
+.aword{text-align:center}
+.aword b{display:block;font-size:38px;font-weight:900;letter-spacing:-0.03em;line-height:1;color:var(--azul)}
+:root[data-theme="dark"] .aword b{color:var(--ink)}
+.aword i{display:block;height:3px;width:min(360px,90%);margin:12px auto 10px;border-radius:2px;background:linear-gradient(90deg,var(--s1),var(--s2),var(--s3),var(--s4))}
+.aword span{display:block;font-size:15px;font-weight:600;color:var(--ink)}
+.aword small{display:block;margin-top:8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.acol{min-width:0}
+.acol .ey{margin:0;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--azul-medio);font-weight:700}
+.acol h2{margin:2px 0 12px;font-size:15px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--ink)}
+.acol>p{margin:0 0 12px;font-size:13.5px;line-height:1.5}
+.src{border-left:3px solid var(--azul);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+.src>div{display:grid;grid-template-columns:52px 1fr;gap:2px 10px}
+.src>div>b{grid-row:1/4;font-size:17px;font-weight:900;color:var(--azul);letter-spacing:.02em}
+:root[data-theme="dark"] .src>div>b{color:var(--amarillo)}
+.src>div>span{font-size:13.5px;font-weight:600}
+.src dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:12.5px}
+.src dt{color:var(--muted)} .src dd{margin:0}
+.arows{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:12.5px;border-top:1px solid var(--line);padding-top:14px;margin:0 0 16px}
+.arows dt{color:var(--muted)} .arows dd{margin:0}
+kbd{display:inline-block;font-family:var(--f-body);font-size:11px;font-weight:700;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--surface);margin-right:3px}
+.anote{margin:0;border-left:3px solid var(--amarillo);padding:4px 0 4px 12px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.mods{display:flex;flex-direction:column}
+.mod{display:grid;grid-template-columns:26px 1fr auto;gap:2px 12px;align-items:center;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;padding:6px 6px;cursor:pointer;border-radius:8px;transition:background-color var(--m-out) var(--ease)}
+.mod:first-child{border-top:0}
+.mod:hover{background:var(--hover);transition-duration:var(--m-in)}
+.mod>i{grid-row:1/3;width:14px;height:14px;border-radius:50%;justify-self:center;box-shadow:0 0 0 3px var(--surface),0 0 0 4px var(--line)}
+.mod b{font-size:14px;font-weight:700}
+.mod em{font-size:11.5px;line-height:1.35;color:var(--muted);font-style:normal}
+.mod em i{font-style:italic}
+.mod span{grid-row:1/3;grid-column:3;font-size:12px;color:var(--muted);text-align:right}
+.aback{grid-column:1/-1;justify-self:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 26px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:background-color var(--m-out) var(--ease),transform var(--m-out) var(--ease)}
+.aback:hover{background:var(--hover);transition-duration:var(--m-in)}
+.aback:active{transform:scale(.97)}
+@media (max-width: 1100px){ .abox{grid-template-columns:1fr 1fr} .aemb{grid-column:1/-1} .aemb svg{max-width:440px} }
+@media (max-width: 760px){ .abox{grid-template-columns:1fr;padding:56px 18px 22px;gap:28px} .aword b{font-size:32px} .abtn span{display:none} .abtn{padding:8px 10px} }
+
 /* Hover y press: entra en 150 ms, sale en 120 ms, press 90 ms */
 .pk,.day,.oth,.lg,.tab,.dzbtn,.close,.locate,.mx td.n,.leaflet-bar a{transition:background-color var(--m-out) var(--ease),color var(--m-out) var(--ease),transform var(--m-out) var(--ease),box-shadow var(--m-out) var(--ease),border-color var(--m-out) var(--ease)}
 .day:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:var(--azul-medio);transition-duration:var(--m-in)}
@@ -253,6 +316,7 @@ tr.fc td{background:var(--fc)}
 @media (min-width: 761px){ .main.pon .timeline{left:auto;right:calc(min(560px,100% - 28px) + 28px);transform:none;max-width:calc(100% - min(560px,100% - 28px) - 340px)} }
 @media (max-width: 760px){
   .runinfo{display:none}
+  .abtn{margin-left:auto}
   .brand h1{font-size:16px}
   .brand svg{width:30px;height:30px}
   .dz{width:auto;right:max(14px,env(safe-area-inset-right,0px));max-width:none;top:10px;left:max(10px,env(safe-area-inset-left,0px))}
@@ -286,6 +350,7 @@ tr.fc td{background:var(--fc)}
       <div><small>SENAMHI · Subdirección de Agrometeorología</small><h1>Visor Agroclimático para Plagas y Enfermedades</h1></div>
     </div>
     <div class="runinfo" id="runinfo"></div>
+    <button class="abtn" id="abtn" type="button" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".6" fill="currentColor"/></svg><span>Acerca de</span></button>
   </header>
   <main class="main">
     <div id="map" aria-label="Mapa de estaciones"></div>
@@ -320,6 +385,9 @@ tr.fc td{background:var(--fc)}
       </div>
     </aside>
   </main>
+  <div class="about" id="about" role="dialog" aria-modal="true" aria-labelledby="atitle">
+    <div class="abox" id="abox"></div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -382,8 +450,18 @@ async function init() {
   document.addEventListener('click', ev => { if (!$('#dz').contains(ev.target)) toggleMenu(false); });
   $('#pclose').onclick = closePanel;
   $('#locate').onclick = locate;
+  $('#abtn').onclick = openAbout;
+  $('#about').inert = true;
+  $('#about').addEventListener('click', ev => { if (ev.target.id === 'about') closeAbout(); });
   document.addEventListener('keydown', ev => {
+    const aOpen = $('#about').classList.contains('open');
+    if ((ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') && !aOpen && !ev.target.closest('input,select,textarea,.leaflet-container')) {
+      const ni = dayIdx + (ev.key === 'ArrowRight' ? 1 : -1);
+      if (ni >= Math.max(0, hoyIdx - 6) && ni < M.fechas.length) { dayIdx = ni; renderAll(); ev.preventDefault(); }
+      return;
+    }
     if (ev.key !== 'Escape') return;
+    if (aOpen) { closeAbout(); return; }
     if ($('#dz').classList.contains('open')) toggleMenu(false);
     else if ($('#panel').classList.contains('open')) closePanel();
     else if (filt) { filt = null; renderLegend(); renderMap(); }
@@ -577,6 +655,72 @@ function renderStation() {
     ${others ? `<div class="others"><p>Otras enfermedades en esta estación</p>${others}</div>` : ''}`;
   $('#station').querySelectorAll('.oth').forEach(b => b.onclick = () => setModel(b.dataset.m));
 }
+
+// Acerca de
+function aboutHTML() {
+  const ms = D.modelos, n = ms.length, y0 = 150;
+  const cols = ['--s1', '--s1', '--s2', '--s2', '--s3', '--s3', '--s4', '--s4'];
+  const rays = ms.map((m, i) => {
+    const y = 40 + i * (220 / (n - 1)), c = tok(cols[i % cols.length]);
+    return `<path class="ray" style="--i:${i};stroke:${c}" d="M236 ${y0} C 300 ${y0}, 330 ${y}, 392 ${y}"/>
+      <text class="rl" style="--i:${i}" x="400" y="${y + 4}">${m.enfermedad}</text>`;
+  }).join('');
+  const conDatos = new Set(), total = new Set();
+  for (const m of ms) for (const e of m.estaciones) { total.add(keyOf(e)); if (e.niveles[hoyIdx] !== 'Sin datos') conDatos.add(keyOf(e)); }
+  const fc = ms[0].fechas, d0 = pd(D.hoy), nf = fc.length - hoyIdx - 1;
+  const fecha = `${WD[d0.getDay()]}, ${d0.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d0.getMonth()]}`;
+  const mods = ms.map(m => {
+    const { c } = dist(m, hoyIdx), top = Object.keys(c).map(Number).filter(s => s < 5).sort((a, b) => b - a)[0];
+    return `<button class="mod" data-m="${m.id}" title="Ver ${m.enfermedad} en el mapa"><i style="background:${top == null ? tok('--nodata') : tok(SEVT[top])}"></i>
+      <b>${m.enfermedad}</b><span>${m.cultivo}<br>${m.var.replace(/^.*\((.*)\)$/, '$1')}</span><em><i>${m.agente}</i> · ${m.modelo}</em></button>`;
+  }).join('');
+  return `<button class="aclose" id="aclose" type="button" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="aemb">
+      <svg viewBox="0 0 520 300" role="img" aria-label="Una serie meteorológica alimenta ${n} modelos de enfermedades">
+        <defs><filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <text x="6" y="${y0 - 12}" style="font-weight:600;fill:${tok('--muted')}">T · HR · PP</text>
+        <path class="in" d="M4 ${y0} L 222 ${y0}"/>
+        ${rays}
+        <g class="node"><circle cx="228" cy="${y0}" r="30" fill="${tok('--amarillo')}"/>
+          <path transform="translate(209 131)" d="M10 27c0-8 6-13.5 16-14.5-1 9-6 14.5-13.5 14.5 3.5-4.5 5.5-6.8 9-9-4.5 1.2-8 4.5-11.5 9z" fill="#0b39b8"/></g>
+      </svg>
+      <div class="aword"><b id="atitle">Visor Agroclimático</b><i></i><span>para Plagas y Enfermedades</span><small>SENAMHI · Subdirección de Agrometeorología</small></div>
+    </div>
+    <div class="acol">
+      <p class="ey">Fuente de datos</p><h2>Datos meteorológicos</h2>
+      <p>El visor une la observación horaria de las estaciones automáticas con el pronóstico horario del modelo ETA. Con esa serie calcula, en cada estación, el riesgo de ${n} enfermedades de cultivos.</p>
+      <div class="src">
+        <div><b>OBS</b><span>Estaciones automáticas · SENAMHI</span>
+          <dl><dt>Variables</dt><dd>temperatura, humedad relativa y lluvia, cada hora</dd><dt>Corte</dt><dd>hasta las 14:00 del día del boletín</dd><dt>Estaciones</dt><dd>${conDatos.size} con datos hoy de ${total.size} evaluadas</dd></dl></div>
+        <div><b>ETA</b><span>Modelo regional · SENAMHI</span>
+          <dl><dt>Resolución</dt><dd>5 km, salida horaria</dd><dt>Alcance</dt><dd>${nf} días de pronóstico</dd><dt>Ajuste</dt><dd>sesgo medio de T y HR en cada estación</dd></dl></div>
+      </div>
+      <dl class="arows">
+        <dt>Corrida vigente</dt><dd>${fecha} · ETA ${D.eta.slice(8)} UTC</dd>
+        <dt>Boletín</dt><dd>todos los días a las 14:30</dd>
+        <dt>Periodo</dt><dd>7 días observados y ${nf} de pronóstico, hasta el ${fdm(fc[fc.length - 1])}</dd>
+        <dt>Teclado</dt><dd><kbd>←</kbd><kbd>→</kbd> día &nbsp; <kbd>Esc</kbd> cerrar</dd>
+      </dl>
+      <p class="anote">Los índices indican si el clima favorece la enfermedad; no confirman su presencia en campo. Las recomendaciones son un borrador pendiente de validación por los especialistas de la SPA y no reemplazan la evaluación del técnico del predio.</p>
+    </div>
+    <div class="acol">
+      <p class="ey">Modelos disponibles</p><h2>Enfermedades</h2>
+      <p>${n} modelos, cada uno con su cultivo, su índice y su escala. El color muestra el nivel más alto de hoy; pulsa uno para verlo en el mapa.</p>
+      <div class="mods">${mods}</div>
+    </div>
+    <button class="aback" id="aback" type="button">Volver al visor</button>`;
+}
+let aboutFrom = null;
+function openAbout() {
+  const a = $('#about'), b = $('#abox');
+  aboutFrom = document.activeElement;
+  toggleMenu(false);
+  b.innerHTML = aboutHTML();
+  b.querySelectorAll('.mod').forEach(x => x.onclick = () => { closeAbout(); if (x.dataset.m !== M.id) setModel(x.dataset.m); });
+  $('#aclose').onclick = $('#aback').onclick = closeAbout;
+  void a.offsetWidth; a.classList.add('open'); a.inert = false; $('#aclose').focus();
+}
+function closeAbout() { const a = $('#about'); a.classList.remove('open'); a.inert = true; if (aboutFrom && aboutFrom.focus) aboutFrom.focus(); }
 
 // estación más cercana a la ubicación del usuario
 function locate() {
