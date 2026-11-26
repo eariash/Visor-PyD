@@ -1,4 +1,4 @@
-# Visor PyD · Visor Agroclimático para Plagas y Enfermedades
+# Visor PyD · Visor Agrometeorológico para Plagas y Enfermedades
 
 Página estática: `index.html` + `datos.json` + `departamentos.geojson` + `paises.geojson`.
 Se regenera en cada corrida con `Rscript R/04_correr.R` y `bash visor/publicar_github.sh`.
