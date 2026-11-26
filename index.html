@@ -250,6 +250,9 @@ tr.fc td{background:var(--fc)}
 .aclose:hover{background:var(--hover);transition-duration:var(--m-in)}
 .aclose:active{transform:scale(.94)}
 .aemb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0}
+.aemb svg .hit{cursor:help}
+.aecap{font-size:16.5px;line-height:1.35;color:var(--ink);text-align:center;padding:4px 10px;border-left:3px solid transparent;border-radius:4px;transition:border-color var(--m-in) var(--ease)}
+.aecap.on{text-align:left;background:var(--surface)}
 .aemb svg{width:100%;max-width:460px;height:auto;overflow:visible}
 .aemb text{font-family:var(--f-body);font-size:12.5px;font-weight:700;fill:var(--ink)}
 .aemb .edge{stroke-dasharray:300;stroke-dashoffset:300;stroke-linecap:round}
@@ -663,6 +666,168 @@ function renderStation() {
   $('#station').querySelectorAll('.oth').forEach(b => b.onclick = () => setModel(b.dataset.m));
 }
 
+// Emblema del "Acerca de": una chispa se vuelve el ambiente, gira, se extiende y forma el triángulo de la enfermedad;
+// luego la lluvia, la temperatura y la humedad alimentan al ambiente y el triángulo se va cargando de riesgo.
+const AE = { V: { H: [200, 54], P: [70, 300], A: [330, 300] }, C: [200, 218], F: [[48, -132], [121, -70], [138, 24]],
+  K: [['Lluvia', '--pp', 'Lluvia: moja el follaje y salpica las esporas; abre la puerta a la infección.'],
+      ['Temperatura', '--t', 'Temperatura: acelera o frena al patógeno; cada enfermedad tiene su rango óptimo.'],
+      ['Humedad', '--hr', 'Humedad: las horas con humedad alta mantienen la hoja mojada, lo que las esporas necesitan para germinar.']],
+  TIP: { H: 'Cultivo: el hospedante; su variedad y su etapa definen cuán susceptible es.',
+         P: 'Patógeno: hongos y oomicetos que esperan condiciones favorables para infectar.',
+         A: 'Ambiente: lo que miden las estaciones cada hora; es el vértice que vigila este visor.' },
+  HINT: 'Pasa el cursor o toca cada parte del triángulo.' };
+let aeRAF = 0;
+function aeSVG() {
+  const c = tok, drop = 'M0-12c6 7 9 11 9 15a9 9 0 0 1-18 0c0-4 3-8 9-15z';
+  const icon = k => k === 0
+    ? `<path d="M-10 1a6 6 0 0 1 1.5-11.5A8 8 0 0 1 6-10a5.5 5.5 0 0 1 4 11z" fill="none" stroke="${c('--pp')}" stroke-width="2.2" stroke-linejoin="round"/>${[-5, 1, 7].map(x => `<path class="ae-rd" d="M${x} 5l-1.6 4" stroke="${c('--pp')}" stroke-width="2.2" stroke-linecap="round"/>`).join('')}`
+    : k === 1
+    ? `<path d="M-3 4V-9a3 3 0 0 1 6 0V4a6 6 0 1 1-6 0z" fill="none" stroke="${c('--t')}" stroke-width="2.2"/><rect id="ae-merc" x="-1.3" y="0" width="2.6" height="6" rx="1.3" fill="${c('--t')}"/><circle cy="8.5" r="3.4" fill="${c('--t')}"/>`
+    : `<clipPath id="ae-dclip"><path d="${drop}"/></clipPath><rect id="ae-hfill" x="-10" y="0" width="20" height="10" fill="${c('--hr')}" fill-opacity=".5" clip-path="url(#ae-dclip)"/><path d="${drop}" fill="none" stroke="${c('--hr')}" stroke-width="2.2" stroke-linejoin="round"/>`;
+  const glow = (id, b) => `<filter id="${id}" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="420"><feGaussianBlur stdDeviation="${b}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  return `<svg id="aesvg" viewBox="0 0 600 420" role="img" aria-label="Triángulo de la enfermedad: cultivo, patógeno y ambiente; la lluvia, la temperatura y la humedad alimentan al ambiente">
+    <defs>${glow('glow', 3)}${glow('glow2', 8)}</defs>
+    <path id="ae-fill"/>
+    ${[0, 1, 2].map(k => `<path id="ae-f${k}" stroke="${c(AE.K[k][1])}" stroke-width="2.2" stroke-dasharray="3 8" stroke-linecap="round" fill="none" opacity="0"/>`).join('')}
+    <path id="ae-e0" stroke="${c('--azul')}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path id="ae-e1" stroke="${c('--amarillo')}" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+    <path id="ae-e2" stroke="${c('--amarillo')}" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+    <text id="ae-mid" text-anchor="middle" style="font-size:16px;font-weight:800" opacity="0">Enfermedad</text>
+    <g id="ae-pulses"></g>
+    <circle id="ae-halo" r="58" fill="${c('--amarillo')}" fill-opacity=".28" opacity="0"/>
+    <circle id="ae-ring" r="60" fill="none" stroke="${c('--amarillo')}" stroke-width="2.2" stroke-dasharray="5 11" stroke-linecap="round" opacity="0"/>
+    ${[0, 1, 2].map(k => `<g id="ae-i${k}" class="hit" data-k="${k}" opacity="0"><circle id="ae-ic${k}" r="5" fill="${c('--surface')}" stroke="${c(AE.K[k][1])}" stroke-width="5"/><g id="ae-ig${k}" transform="scale(0)">${icon(k)}</g><text id="ae-il${k}" x="31" y="5" style="font-size:14px" opacity="0">${AE.K[k][0]}</text></g>`).join('')}
+    <g id="ae-H" class="hit" data-k="H" transform="scale(0)"><circle id="ae-Hc" r="26" fill="${c('--surface')}" stroke="${c('--azul')}" stroke-width="2.5"/><path transform="translate(-19 -19)" d="M11 26c0-8 6-13.5 16-14.5-1 9-6 14.5-13.5 14.5 3.5-4.5 5.5-6.8 9-9-4.5 1.2-8 4.5-11.5 9z" fill="${c('--s1')}"/></g>
+    <text id="ae-Hl" style="font-size:14px" opacity="0">Cultivo</text>
+    <g id="ae-P" class="hit" data-k="P" transform="scale(0)"><circle id="ae-Pc" r="26" fill="${c('--surface')}" stroke="${c('--azul')}" stroke-width="2.5"/>${[[-7, -3, 5.5], [5, -6, 4.5], [1, 6, 5]].map((q, j) => `<circle id="ae-s${j}" cx="${q[0]}" cy="${q[1]}" r="${q[2]}" fill="${c('--s4')}" fill-opacity="${.8 + j * .07}"/>`).join('')}</g>
+    <text id="ae-Pl" text-anchor="middle" style="font-size:14px" opacity="0">Patógeno</text>
+    <g id="ae-parts"></g>
+    <g id="ae-A" class="hit" data-k="A" transform="scale(0)"><circle r="46" fill="${c('--amarillo')}"/><text id="ae-At" y="5" text-anchor="middle" style="font-size:14px;font-weight:800;fill:#0b39b8" opacity="0">Ambiente</text></g>
+    <g id="ae-spark"><circle r="18" fill="${c('--amarillo')}" filter="url(#glow2)"/><path d="M0-24L4-4 24 0 4 4 0 24-4 4-24 0-4-4z" fill="#fff4c2" stroke="${c('--amarillo')}" stroke-width="1.5" stroke-linejoin="round"/><circle r="4" fill="#fff"/></g>
+    <foreignObject x="10" y="364" width="580" height="54"><div xmlns="http://www.w3.org/1999/xhtml" class="aecap" id="ae-cap"></div></foreignObject>
+  </svg>`;
+}
+function aeStart() {
+  const svg = $('#aesvg'); if (!svg) return;
+  const g = id => svg.querySelector('#ae-' + id), NS = 'http://www.w3.org/2000/svg';
+  const cl = v => Math.max(0, Math.min(1, v)), L = (a, b, q) => a + (b - a) * q;
+  const eOut = q => 1 - (1 - q) ** 3, eIn = q => q * q, eIO = q => q < .5 ? 4 * q ** 3 : 1 - (-2 * q + 2) ** 3 / 2;
+  const eBack = q => q <= 0 ? 0 : 1 + 2.70158 * (q - 1) ** 3 + 1.70158 * (q - 1) ** 2;
+  const rgb = h => { h = h.replace('#', ''); if (h.length === 3) h = [...h].map(x => x + x).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const stops = ['--s1', '--s2', '--s3', '--s4'].map(n => rgb(tok(n)));
+  const mix = l => { const x = Math.min(l, .999) * (stops.length - 1), i = Math.floor(x), f = x - i, a = stops[i], b = stops[i + 1];
+    return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * f)).join(',')})`; };
+  const col = { 0: tok('--pp'), 1: tok('--t'), 2: tok('--hr'), b: tok('--amarillo') };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const S = { t0: performance.now(), last: 0, hover: null, parts: [], pulses: [], charge: 0, reset: 0, aPulse: 0, flash: { H: 0, P: 0 }, disp: 0, burst: false, next: 2900, ip: [[0, 0], [0, 0], [0, 0]], cap: '' };
+  svg.querySelectorAll('.hit').forEach(el => {
+    const key = isNaN(el.dataset.k) ? el.dataset.k : +el.dataset.k;
+    el.addEventListener('pointerenter', ev => { if (ev.pointerType === 'mouse') S.hover = key; if (reduce) frame(performance.now()); });
+    el.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse' && S.hover === key) S.hover = null; if (reduce) frame(performance.now()); });
+    el.addEventListener('pointerup', ev => { if (ev.pointerType !== 'mouse') { S.hover = S.hover === key ? null : key; if (reduce) frame(performance.now()); } });
+  });
+  const mk = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  function spawn(type) {
+    const el = type === 0 ? mk('path', { d: 'M0-4.5c2 2.6 3.2 4.2 3.2 5.6a3.2 3.2 0 0 1-6.4 0c0-1.4 1.2-3 3.2-5.6z', fill: col[0] })
+      : mk('circle', { r: type === 1 ? 3.4 : type === 2 ? 2.8 : 2.2, fill: col[type], filter: type === 1 || type === 'b' ? 'url(#glow)' : '' });
+    g('parts').appendChild(el); return el;
+  }
+  function frame(now) {
+    const t = reduce ? 4200 : now - S.t0, dt = Math.min(50, now - (S.last || now)); S.last = now;
+    const pS = cl(t / 750), pA = cl((t - 650) / 750), s = eIO(cl((t - 1500) / 1100));
+    const rot = 2 * Math.PI * 1.6 * (1 - Math.exp(-Math.max(0, t - 650) / 900)) + Math.max(0, t - 2600) * .0004;
+    const pos = k => [L(AE.C[0], AE.V[k][0], s), L(AE.C[1], AE.V[k][1], s)];
+    const H = pos('H'), P = pos('P'), A = pos('A'), lab = cl((t - 2400) / 400), loop = t > 2800;
+    // chispa
+    const so = cl((t - 600) / 400), sp = g('spark');
+    sp.style.display = so >= 1 ? 'none' : '';
+    sp.setAttribute('transform', `translate(${AE.C[0]} ${AE.C[1]}) rotate(${t * .25}) scale(${(.2 + 1.1 * eOut(pS)) * (1 - so * .6)})`);
+    sp.setAttribute('opacity', (1 - so) * (.75 + .25 * Math.sin(t / 35)));
+    if (!S.burst && t > 650 && !reduce) { S.burst = true;
+      for (let i = 0; i < 16; i++) { const a = i / 16 * 2 * Math.PI + Math.random() * .3, v = .07 + Math.random() * .09;
+        S.parts.push({ type: 'b', x: AE.C[0], y: AE.C[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 550 + Math.random() * 350, el: spawn('b') }); } }
+    // ambiente, anillo y halo
+    S.aPulse *= Math.exp(-dt / 240); if (S.hover === 'A') S.aPulse = Math.max(S.aPulse, .5 + .5 * Math.sin(t / 160));
+    g('A').setAttribute('transform', `translate(${A[0]} ${A[1]}) scale(${Math.max(.001, eBack(pA)) * (1 + .08 * S.aPulse)})`);
+    g('At').setAttribute('opacity', cl((pA - .5) * 2));
+    g('ring').setAttribute('transform', `translate(${A[0]} ${A[1]}) rotate(${rot * 180 / Math.PI})`);
+    g('ring').setAttribute('opacity', pA * (.95 - .6 * cl((t - 2600) / 800)));
+    const hp = cl((t - 2500) / 500);
+    g('halo').setAttribute('transform', `translate(${A[0]} ${A[1]}) scale(${1 + .12 * Math.sin(t / 450) * hp + .18 * S.aPulse})`);
+    g('halo').setAttribute('opacity', hp * (.8 + .2 * Math.sin(t / 450)));
+    // vértices cultivo y patógeno
+    for (const [k, q] of [['H', H], ['P', P]]) {
+      S.flash[k] *= Math.exp(-dt / 260); if (S.hover === k) S.flash[k] = Math.max(S.flash[k], .6);
+      g(k).setAttribute('transform', `translate(${q[0]} ${q[1]}) scale(${Math.max(.001, eBack(cl((s - .35) / .65))) * (1 + .12 * S.flash[k])})`);
+      g(k + 'c').setAttribute('stroke-width', 2.5 + 3 * S.flash[k]);
+    }
+    g('Hl').setAttribute('x', H[0] + 36); g('Hl').setAttribute('y', H[1] - 8); g('Hl').setAttribute('opacity', lab);
+    g('Pl').setAttribute('x', P[0]); g('Pl').setAttribute('y', P[1] + 47); g('Pl').setAttribute('opacity', lab);
+    S.disp += ((S.hover === 'P' ? 1 : 0) - S.disp) * Math.min(1, dt / 160);
+    [[-7, -3], [5, -6], [1, 6]].forEach(([x, y], j) => { const d = Math.hypot(x, y), w = Math.sin(t / 110 + j * 2) * 1.6 * S.disp;
+      g('s' + j).setAttribute('transform', `translate(${x / d * 11 * S.disp + w} ${y / d * 11 * S.disp - w})`); });
+    // triángulo y carga de riesgo
+    if (S.reset && t - S.reset > 1400) { S.charge = Math.max(0, S.charge - dt * .012); if (!S.charge) S.reset = 0; }
+    const lvl = cl(S.charge / 14); if (lvl >= 1 && !S.reset) S.reset = t;
+    const eo = cl((s - .05) / .4), f = n => n.map(v => v.toFixed(1)).join(' ');
+    g('e0').setAttribute('d', `M${f(H)}L${f(P)}`); g('e1').setAttribute('d', `M${f(P)}L${f(A)}`); g('e2').setAttribute('d', `M${f(H)}L${f(A)}`);
+    ['e0', 'e1', 'e2'].forEach(e => g(e).setAttribute('opacity', eo));
+    g('fill').setAttribute('d', `M${f(H)}L${f(P)}L${f(A)}z`); g('fill').setAttribute('fill', mix(lvl));
+    g('fill').setAttribute('fill-opacity', ((.07 + .2 * lvl) * eo).toFixed(3));
+    g('mid').setAttribute('x', (H[0] + P[0] + A[0]) / 3 - 8); g('mid').setAttribute('y', (H[1] + P[1] + A[1]) / 3 + 4);
+    g('mid').setAttribute('opacity', cl((t - 2300) / 400));
+    // lluvia, temperatura y humedad: orbitan mientras el ambiente gira y luego se ubican en su sitio
+    const grow = cl((t - 900) / 500), num = typeof S.hover === 'number';
+    for (let k = 0; k < 3; k++) {
+      const ang = rot + k * 2 * Math.PI / 3 - Math.PI / 2, R = 76 * eOut(grow), hv = S.hover === k;
+      const x = A[0] + L(Math.cos(ang) * R, AE.F[k][0], s), y = A[1] + L(Math.sin(ang) * R, AE.F[k][1], s);
+      S.ip[k] = [x, y];
+      g('i' + k).setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${hv ? 1.1 : 1})`);
+      g('i' + k).setAttribute('opacity', grow * (num && !hv ? .45 : 1));
+      g('ic' + k).setAttribute('r', L(5, 23, s)); g('ic' + k).setAttribute('stroke-width', L(5, 2, s));
+      g('ig' + k).setAttribute('transform', `scale(${eOut(s)})`); g('il' + k).setAttribute('opacity', lab);
+      const fl = g('f' + k);
+      fl.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)}L${f(A)}`);
+      fl.setAttribute('opacity', cl((t - 2500) / 400) * (!num ? .75 : hv ? 1 : .12));
+      fl.setAttribute('stroke-width', hv ? 3.4 : 2.2); fl.setAttribute('stroke-dashoffset', -t * .025);
+    }
+    svg.querySelectorAll('.ae-rd').forEach((el, j) => { const q = (t / 650 + j / 3) % 1; el.setAttribute('transform', `translate(${-q * 1.5} ${q * 6})`); el.setAttribute('opacity', 1 - q); });
+    const h = 6 + 5 * Math.sin(t / 700); g('merc').setAttribute('y', 6 - h); g('merc').setAttribute('height', h + 2);
+    const lv = 11 + 9 * Math.sin(t / 900); g('hfill').setAttribute('y', 12 - lv); g('hfill').setAttribute('height', lv);
+    // partículas que viajan al ambiente; al llegar, el ambiente late y el pulso sigue por los lados amarillos
+    if (loop && !reduce && t > S.next) {
+      const ks = num ? [S.hover] : [0, 1, 2], k = ks[Math.floor(Math.random() * ks.length)];
+      S.parts.push({ type: k, life: 0, max: 900 + Math.random() * 300, off: Math.random() * 6.28, el: spawn(k) });
+      S.next = t + (num ? 170 : 300 + Math.random() * 220);
+    }
+    S.parts = S.parts.filter(q => {
+      q.life += dt; const u = q.life / q.max;
+      if (q.type === 'b') { q.x += q.vx * dt; q.y += q.vy * dt; q.el.setAttribute('transform', `translate(${q.x} ${q.y})`); q.el.setAttribute('opacity', 1 - u); }
+      else {
+        const [x0, y0] = S.ip[q.type], e = eIn(cl(u)), dx = A[0] - x0, dy = A[1] - y0, d = Math.hypot(dx, dy) || 1, w = 5 * Math.sin(e * Math.PI) * Math.sin(q.off + e * 7);
+        q.el.setAttribute('transform', `translate(${(x0 + dx * e - dy / d * w).toFixed(1)} ${(y0 + dy * e + dx / d * w).toFixed(1)}) rotate(${q.type === 0 ? Math.atan2(dy, dx) * 180 / Math.PI - 90 : 0})`);
+        q.el.setAttribute('opacity', Math.min(1, u * 4) * (num && q.type !== S.hover ? .3 : 1));
+        if (u >= 1) { S.aPulse = 1; if (!S.reset) S.charge++; S.pulses.push({ to: 'H', life: 0, el: spawn('b') }, { to: 'P', life: 0, el: spawn('b') }); }
+      }
+      if (u >= 1) { q.el.remove(); return false; } return true;
+    });
+    S.pulses = S.pulses.filter(q => {
+      q.life += dt; const u = cl(q.life / 650), e = eIO(u), to = q.to === 'H' ? H : P;
+      q.el.setAttribute('transform', `translate(${L(A[0], to[0], e)} ${L(A[1], to[1], e)}) scale(2)`);
+      if (u >= 1) { S.flash[q.to] = 1; q.el.remove(); return false; } return true;
+    });
+    // texto según lo que señale el usuario
+    const cap = S.hover == null ? AE.HINT : typeof S.hover === 'number' ? AE.K[S.hover][2] : AE.TIP[S.hover];
+    const ce = g('cap'); if (cap !== S.cap) { S.cap = cap; ce.textContent = cap; ce.classList.toggle('on', S.hover != null); }
+    ce.style.opacity = lab;
+    ce.style.borderColor = typeof S.hover === 'number' ? col[S.hover] : S.hover ? tok('--amarillo') : 'transparent';
+  }
+  const tick = now => { frame(now); aeRAF = requestAnimationFrame(tick); };
+  cancelAnimationFrame(aeRAF);
+  if (reduce) frame(performance.now()); else aeRAF = requestAnimationFrame(tick);
+}
+function aeStop() { cancelAnimationFrame(aeRAF); aeRAF = 0; }
+
 // Acerca de
 function aboutHTML() {
   const ms = D.modelos, n = ms.length;
@@ -677,32 +842,7 @@ function aboutHTML() {
   }).join('');
   return `<button class="aclose" id="aclose" type="button" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <div class="aemb">
-      <svg viewBox="0 0 600 380" role="img" aria-label="Triángulo de la enfermedad: cultivo, patógeno y ambiente, con el ambiente (lluvia, temperatura y humedad) destacado">
-        <defs><filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="380"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-        <path d="M200 54 70 300h260z" fill="${tok('--azul')}" fill-opacity=".06"/>
-        <path class="edge" style="--i:0" d="M200 54 70 300" stroke="${tok('--azul')}" stroke-width="2.5" fill="none"/>
-        <path class="edge" style="--i:1" d="M70 300h260" stroke="${tok('--amarillo')}" stroke-width="5" fill="none" filter="url(#glow)"/>
-        <path class="edge" style="--i:2" d="M200 54 330 300" stroke="${tok('--amarillo')}" stroke-width="5" fill="none" filter="url(#glow)"/>
-        <text class="env" style="--i:0;font-size:16px;font-weight:800" x="200" y="222" text-anchor="middle">Enfermedad</text>
-        ${[['lluvia', 'Lluvia', '--pp', 378, 168], ['temp', 'Temperatura', '--t', 451, 230], ['hum', 'Humedad', '--hr', 468, 324]].map(([k, t, c, x, y], i) => {
-          const col = tok(c), icon = k === 'lluvia'
-            ? `<path d="M-10 3a6 6 0 0 1 1.5-11.5A8 8 0 0 1 6-8a5.5 5.5 0 0 1 4 11z" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/><path d="M-5 8l-2 5M1 8l-2 5M7 8l-2 5" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`
-            : k === 'temp'
-            ? `<path d="M-3 4V-9a3 3 0 0 1 6 0V4a6 6 0 1 1-6 0z" fill="none" stroke="${col}" stroke-width="2.2"/><circle cy="8.5" r="3.2" fill="${col}"/><path d="M0 6V-4" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`
-            : `<path d="M0-12c6 7 9 11 9 15a9 9 0 0 1-18 0c0-4 3-8 9-15z" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/><path d="M-4 4a4 4 0 0 0 4 4" stroke="${col}" stroke-width="2" stroke-linecap="round" fill="none"/>`;
-          return `<path class="flow" d="M${x} ${y} L330 300" stroke="${col}" stroke-width="2.2" fill="none"/>
-            <g class="env" style="--i:${i + 1}"><circle cx="${x}" cy="${y}" r="23" fill="${tok('--surface')}" stroke="${col}" stroke-width="2"/><g transform="translate(${x} ${y})">${icon}</g>
-            <text x="${x + 31}" y="${y + 5}" style="font-size:14px">${t}</text></g>`;
-        }).join('')}
-        <circle class="halo" cx="330" cy="300" r="58" fill="${tok('--amarillo')}" fill-opacity=".28"/>
-        <g class="nd" style="--i:2"><circle cx="330" cy="300" r="46" fill="${tok('--amarillo')}"/><text x="330" y="305" text-anchor="middle" style="font-size:14px;font-weight:800;fill:#0b39b8">Ambiente</text></g>
-        <g class="nd" style="--i:0"><circle cx="200" cy="54" r="26" fill="${tok('--surface')}" stroke="${tok('--azul')}" stroke-width="2.5"/>
-          <path transform="translate(181 35)" d="M11 26c0-8 6-13.5 16-14.5-1 9-6 14.5-13.5 14.5 3.5-4.5 5.5-6.8 9-9-4.5 1.2-8 4.5-11.5 9z" fill="${tok('--s1')}"/></g>
-        <text x="236" y="46" style="font-size:14px">Cultivo</text>
-        <g class="nd" style="--i:1"><circle cx="70" cy="300" r="26" fill="${tok('--surface')}" stroke="${tok('--azul')}" stroke-width="2.5"/>
-          <circle cx="63" cy="297" r="5.5" fill="${tok('--s4')}"/><circle cx="75" cy="294" r="4.5" fill="${tok('--s4')}" fill-opacity=".8"/><circle cx="71" cy="306" r="5" fill="${tok('--s4')}" fill-opacity=".9"/></g>
-        <text x="70" y="347" text-anchor="middle" style="font-size:14px">Patógeno</text>
-      </svg>
+      ${aeSVG()}
       <div class="aword"><b id="atitle">Visor Agrometeorológico</b><i></i><span>para Plagas y Enfermedades</span><small>SENAMHI · Subdirección de Agrometeorología</small></div>
     </div>
     <div class="acol">
@@ -738,9 +878,9 @@ function openAbout() {
   b.innerHTML = aboutHTML();
   b.querySelectorAll('.mod').forEach(x => x.onclick = () => { closeAbout(); if (x.dataset.m !== M.id) setModel(x.dataset.m); });
   $('#aclose').onclick = $('#aback').onclick = closeAbout;
-  void a.offsetWidth; a.classList.add('open'); a.inert = false; $('#aclose').focus();
+  void a.offsetWidth; a.classList.add('open'); a.inert = false; $('#aclose').focus(); aeStart();
 }
-function closeAbout() { const a = $('#about'); a.classList.remove('open'); a.inert = true; if (aboutFrom && aboutFrom.focus) aboutFrom.focus(); }
+function closeAbout() { aeStop(); const a = $('#about'); a.classList.remove('open'); a.inert = true; if (aboutFrom && aboutFrom.focus) aboutFrom.focus(); }
 
 // estación más cercana a la ubicación del usuario
 function locate() {
